@@ -1,0 +1,312 @@
+Forgot FG password
+
+    Connecting via console
+
+    We find SN (it will appear when the console is loaded !!! you can not search on the piece of iron), for example FG3H0E3917901246
+
+    Next we have 14 s. to enter username and password
+
+    login maintainer
+
+password bcpb+SN, for example bcpbFG3H0E3917901246 (SN all characters are large !!!)
+
+    After we logged into the hardware, either exec factoryreset - reset to factory settings, or config system admin, show - and then set a new password for the admin
+
+NTP server
+
+config system ntp
+
+    set server-mode enable
+
+    set interface "WAN1" "Wan2"
+
+end
+NTP client
+
+config system ntp
+
+    set ntpsync enable
+
+    set type custom
+
+    config ntpserver
+
+        edit 1
+
+            set server "10.0.0.2"
+
+        next
+
+    end
+
+end
+Update databases via FTP example
+
+execute restore av ftp /vsigupdate-OS6.4.0_91.02680.MMDB.pkg 195.144.1.8 user pass
+
+execute restore av ftp /vsigupdate-OS6.4.0_91.02680.ETDB.High.pkg 195.144.1.8 user pass
+
+execute restore ips ftp /nids_OS6.4.0_23.00539.NIDS.pkg 195.144.1.8 user pass
+
+execute restore ips ftp /apdb_OS6.4.0_23.00538.APDB.pkg 195.144.1.8 user pass
+
+execute restore other-objects ftp /ffdb_fos64_00007.03178.pkg 195.144.1.8 user pass
+
+execute restore ips ftp /isdb_OS6.4.0_23.00538.ISDB.pkg 195.144.1.8 user pass
+Merge config via CLI
+
+execute backup full-config ftp backup.conf 10.10.10.30 
+Connect to the fort via SCP
+
+http://alstechcorner.blogspot.com/2014/01/how-to-automate-fortigate-configuration.html
+
+config system global
+
+set admin-scp enable
+
+end 
+
+scp -oStrictHostKeyChecking=no admin@192.168.20.1:sys_config /home/20.conf
+Increase the blocking time for incorrect password up to 10 minutes
+
+config system global
+
+set admin-lockout-duration 600
+
+end 
+Очистить поле df-bit для ipsec
+
+config system global
+
+set honor-df disable
+VRRP
+
+config system interface
+
+ edit "wan2"
+
+     set vdom "root"
+
+     set ip 10.25.4.158 255.255.240.0
+
+     set allowaccess ping https ssh http telnet fgfm
+
+     set type physical
+
+     set device-identification enable
+
+     set fortiheartbeat enable
+
+     set endpoint-compliance enable
+
+     config vrrp
+
+         edit 1
+
+             set vrgrp 1
+
+             set vrip 172.16.128.145
+
+             set priority 150
+
+                set vrdst 8.8.8.8 <-- Monitored subnet ( not monitored by icmp but by routing table) 
+
+             set vrdst-priority 50 <-- priority if subnet is unreachable
+
+         next
+
+     end
+
+     set role lan
+
+     set snmp-index 4
+
+ next 
+
+
+get router info vrrp 
+
+https://kb.fortinet.com/kb/documentLink.do?externalID=FD44632
+
+Monitor neighboring IPSEC tunnel
+
+config vpn ipsec phase1-interface
+
+set monitor <основной туннель>
+Strong bees
+Create token 
+
+https://www.insoftservices.uk/fortigate-rest-api-token-authentication/
+Find info by API 
+
+https://fndn.fortinet.net/index.php?/login/
+Когда фортик пвтается отправить пакеты по при резервировании через старый интерфейс
+
+https://kb.fortinet.com/kb/documentLink.do?externalID=FD40943
+
+config system global
+
+  set snat-route-change enable
+
+   end 
+LTE setup on modem models
+
+config system lte-modem
+
+    set apn "internet.tele2.ru" - for Internet
+
+    set apn "vpn.rtk.ru" - for private apn rkt
+
+end
+
+lte-modem wireless-profile  fortik should receive automatically, or set manually.
+
+https://kb.fortinet.com/kb/documentLink.do?externalID=FD47999
+LTE setup on modem models
+
+config system lte-modem
+
+    set apn "internet.tele2.ru" - for Internet
+
+    set apn "vpn.rtk.ru" - for private apn rkt
+
+end
+
+lte-modem wireless-profile  fortik should receive automatically, or set manually.
+
+https://kb.fortinet.com/kb/documentLink.do?externalID=FD47999
+Route-reflector & next-hop-self enable
+
+config neighbor
+
+        edit "172.17.0.1"
+
+            set next-hop-self enable
+
+            set next-hop-self-rr enable
+
+            set remote-as 65300
+
+            set update-source "to-1"
+
+            set route-reflector-client enable
+
+        next
+
+        edit "10.0.0.10"
+
+            set next-hop-self enable
+
+            set remote-as 12389
+
+            set update-source "port2"
+
+        next
+
+    end
+ipsec FG-FG + tunnel ip
+
+config vpn ipsec phase1-interface
+
+    edit "TO_NOP_RT"
+
+        set interface "wan1"
+
+        set peertype any
+
+        set net-device disable
+
+        set proposal aes128-sha256 aes256-sha256 aes128-sha1 aes256-sha1
+
+        set dpd on-idle
+
+        set remote-gw 172.21.0.26
+
+        set psksecret C7ML4KxoFgk7j25mMoTd
+
+        set dpd-retryinterval 5
+
+    next
+
+end
+
+config vpn ipsec phase2-interface
+
+    edit "TO_NOP_RT"
+
+        set phase1name "TO_NOP_RT"
+
+        set proposal aes128-sha1 aes256-sha1 aes128-sha256 aes256-sha256
+
+    next
+
+end
+
+config system interface
+
+    edit "TO_NOP_RT"
+
+        set vdom "root"
+
+        set ip 10.20.0.1 255.255.255.255
+
+        set allowaccess ping
+
+        set type tunnel
+
+        set remote-ip 10.20.0.0 255.255.255.254
+
+        set snmp-index 9
+
+        set interface "wan1"
+
+    next
+
+end
+
+config firewall policy
+
+    edit 10
+
+        set name "ANY"
+
+        set srcintf "any"
+
+        set dstintf "any"
+
+        set srcaddr "all"
+
+        set dstaddr "all"
+
+        set action accept
+
+        set schedule "always"
+
+        set service "ALL"
+
+    next
+
+end
+
+configuring FSSO 
+configuring  FSSO options
+
+DC-Agent mode 
+
+The DC Agent installed on the domain controllers 
+
+Polling Mode 
+
+In polling mode there are three options: NetAPI polling, Event log polling, and Event log using WMI. 
+
+However, when using local polling from the FortiGate directly, there is no such option, only Event Log Polling is used 
+configuring  FSSO options
+
+config system settings
+
+   set central-nat [enable | disable]
+
+end
+disable automatic transition from 4G to 3G
+
+FortiWiFi-40F-3G4G (lte-modem) # set manual-handover
